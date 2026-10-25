@@ -1,0 +1,13 @@
+name: Checks
+on: [push, pull_request]
+jobs:
+  contracts:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install numpy==1.26.4 Pillow opencv-python-headless==4.10.0.84 OpenEXR
+      - run: python -m unittest test_contract test_packaging
+      - run: python build_distribution.py

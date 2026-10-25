@@ -1,0 +1,11 @@
+numpy==1.26.4
+Pillow>=10.4,<13
+opencv-python-headless==4.10.0.84
+transformers==4.57.1
+diffusers==0.35.2
+accelerate>=1.2,<2
+rembg[cpu]==2.0.67
+OpenEXR>=3.3,<4
+sentencepiece>=0.2,<1
+protobuf>=5,<7
+pywebview==6.2.1

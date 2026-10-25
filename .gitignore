@@ -1,0 +1,19 @@
+/.venv/
+/models/
+/outputs/
+/cache/
+__pycache__/
+*.log
+app_settings.json
+/test-artifacts/
+/build/
+/dist/
+/runtime/
+/tools/
+/research/
+/VFX Pass Studio.exe
+*.zip
+*.tmp
+*.pyc
+.env
+.env.*

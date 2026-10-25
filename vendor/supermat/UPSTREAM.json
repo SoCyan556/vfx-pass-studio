@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/hyj542682306/SuperMat",
+  "commit": "4fe25bc6cb8cb7a3ed81ce74512f760dd33f80f4",
+  "weights": "https://huggingface.co/oyiya/SuperMat",
+  "base_components": "sd2-community/stable-diffusion-2-1"
+}
