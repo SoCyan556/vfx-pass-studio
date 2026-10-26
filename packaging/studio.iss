@@ -1,7 +1,7 @@
 #ifndef SourceDir
   #define SourceDir ".."
 #endif
-#define AppVersion "0.4.0"
+#define AppVersion "0.4.1"
 [Setup]
 AppId={{A1A1EE05-8CA5-482A-9450-F956A3F24CF8}
 AppName=VFX Pass Studio

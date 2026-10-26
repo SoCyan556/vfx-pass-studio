@@ -1,5 +1,15 @@
 # Validation
 
+## 0.4.1 depth initialization fix
+
+- 15 tests pass, including the reported empty AutoImageProcessor lookup as a
+  regression scenario. The bundled processor initializes with network blocked
+  and produces exactly the same input tensors as the upstream configuration.
+- Configurations and weights share pinned revision
+  `5426e4f0f36572d16453bbda7a8389317b1bef99`; Apache-2.0 notices are included.
+- Download failures retain their underlying exception rather than replacing it
+  with the generic image-processor message.
+
 Release 0.4.0 is validated on Windows with Python 3.11 and Blender 4.2 LTS.
 
 ## Automated checks

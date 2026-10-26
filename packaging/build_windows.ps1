@@ -24,4 +24,4 @@ if (!$InnoCompiler) {
 if (!(Test-Path -LiteralPath $InnoCompiler)) { throw 'Install Inno Setup or pass -InnoCompiler with the path to ISCC.exe.' }
 & $InnoCompiler "/DSourceDir=$studioRoot" packaging/studio.iss
 if ($LASTEXITCODE -ne 0) { throw 'Installer compilation failed.' }
-Get-FileHash dist/VFX-Pass-Studio-Setup-0.4.0.exe -Algorithm SHA256
+Get-FileHash dist/VFX-Pass-Studio-Setup-0.4.1.exe -Algorithm SHA256

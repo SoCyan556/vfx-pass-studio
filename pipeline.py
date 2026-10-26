@@ -17,6 +17,8 @@ ROOT = Path(__file__).resolve().parent
 os.environ.setdefault('HF_HOME', str(ROOT / 'models' / 'huggingface'))
 os.environ.setdefault('U2NET_HOME', str(ROOT / 'models' / 'matting'))
 os.environ.setdefault('HF_HUB_DISABLE_SYMLINKS_WARNING', '1')
+os.environ.setdefault('HF_HUB_ETAG_TIMEOUT', '30')
+os.environ.setdefault('HF_HUB_DOWNLOAD_TIMEOUT', '60')
 
 import cv2
 import numpy as np
@@ -274,10 +276,9 @@ class Generator:
     def make_depth(self, files, work):
         self.event('Loading depth model (first use downloads weights) …', 'Depth')
         import torch
-        from transformers import AutoImageProcessor, AutoModelForDepthEstimation
-        model_id = 'depth-anything/Depth-Anything-V2-Small-hf'
-        processor = AutoImageProcessor.from_pretrained(model_id)
-        model = AutoModelForDepthEstimation.from_pretrained(model_id, use_safetensors=True).to(self.device).eval()
+        from depth_backend import load_processor, load_model
+        processor = load_processor()
+        model = load_model(self.device, self.check, lambda message: self.event(message, 'Depth'))
         smooth = TemporalFilter(self.s.temporal)
         lows, highs = [], []
         for i, file, rgb in self.each('Depth', files):

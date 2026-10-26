@@ -9,12 +9,12 @@ PUBLISH_FILES = (
     'vfx_blender_bridge/__init__.py', 'test_contract.py', 'make_test_clip.py',
     'blender_smoke_test.py', 'build_distribution.py', 'test_ui.cjs',
     'test_desktop_integration.py', 'repair_basecolor.py', 'supermat_backend.py',
-    'test_packaging.py',
+    'test_packaging.py', 'depth_backend.py', 'test_depth_loading.py',
 )
 
 def source_files():
     files = [ROOT / name for name in PUBLISH_FILES]
-    for directory in ('ui', 'vendor/supermat', 'packaging', '.github'):
+    for directory in ('ui', 'vendor', 'packaging', '.github'):
         files += [p for p in (ROOT / directory).rglob('*')
                   if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc'
                   and not p.name.endswith('.edit.txt') and p.name != 'fangs.png']

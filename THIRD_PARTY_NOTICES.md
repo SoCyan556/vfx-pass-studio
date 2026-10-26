@@ -6,6 +6,9 @@ models and their outputs retain their own licenses and terms.
 - **SuperMat**: MIT, Copyright (c) 2026 Hong Yijia. Full notice and upstream
   revision: `vendor/supermat/LICENSE` and `UPSTREAM.json`.
 - **Lucide**: ISC; full notice in `ui/vendor/LUCIDE-LICENSE.txt`.
+- **Depth Anything V2 Small configuration**: Apache-2.0; the original JSON
+  configuration, full license and pinned upstream revision are included in
+  `vendor/depth_anything/`. Model weights still download separately.
 - **Python 3.11.9**: installer includes the official Python NuGet runtime.
   Complete notices are installed as `runtime/LICENSE.txt`.
   Source: https://www.python.org/downloads/release/python-3119/

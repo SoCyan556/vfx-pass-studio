@@ -12,6 +12,9 @@ import transformers
 import rembg
 import OpenEXR
 from media import binary
+from depth_backend import load_processor
+load_processor()
+print('Bundled depth processor ready')
 print(binary('ffmpeg'))
 print(binary('ffprobe'))
 print('Runtime ready; CUDA:', torch.cuda.is_available())

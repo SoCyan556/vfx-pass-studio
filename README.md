@@ -4,6 +4,11 @@ A local Windows video-to-pass generator for the user's existing Beeble Blender a
 
 ## Start
 
+**0.4.1:** fixes Depth Anything image-processor initialization on new PCs by
+bundling the verified processor and architecture configuration. Close the app
+before installing the update over 0.4.0. Settings, model caches and generated
+passes are preserved. Model weights still download on first use.
+
 Download the Windows installer from [Releases](https://github.com/SoCyan556/vfx-pass-studio/releases/latest), install it, then open **VFX Pass Studio** from Start or its optional desktop shortcut. The first launch installs the AI runtime and FFmpeg, and installs Microsoft WebView2 if missing. Internet and several GB of free disk space are needed. Model weights download when first used; footage stays local.
 
 The installer includes a private Python 3.11 runtime, the fang taskbar/shortcut icon, and an uninstaller. No administrator account or system Python is required. Windows 10/11 x64 is supported. NVIDIA GPU acceleration is recommended; the full AI material mode requires an NVIDIA GPU. The installer is unsigned. Windows may show a publisher warning.

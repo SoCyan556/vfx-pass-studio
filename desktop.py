@@ -81,7 +81,7 @@ class DesktopAPI:
             except Exception:
                 pass
         return dict(settings=dict(self._config), package=package, video=video, busy=self._busy,
-                    exporting=self._export_busy, model='SuperMat · Marigold · Depth Anything', version='0.4.0')
+                    exporting=self._export_busy, model='SuperMat · Marigold · Depth Anything', version='0.4.1')
 
     def poll(self):
         with self._lock:

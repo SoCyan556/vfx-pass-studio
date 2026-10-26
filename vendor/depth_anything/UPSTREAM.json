@@ -1,0 +1,7 @@
+{
+  "repository": "https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf",
+  "revision": "5426e4f0f36572d16453bbda7a8389317b1bef99",
+  "license": "Apache-2.0",
+  "files": ["config.json", "preprocessor_config.json"],
+  "modifications": "None. Original model configuration bundled for reliable local initialization."
+}
