@@ -1,7 +1,7 @@
 # Contributing
 
 Use Python 3.11 on Windows. Run `setup.ps1`, then `.venv\Scripts\python.exe app.py`.
-Run `.venv\Scripts\python.exe -m unittest test_contract test_packaging` before submitting.
+Run `.venv\Scripts\python.exe -m unittest test_contract test_packaging test_depth_loading test_temporal` before submitting.
 Do not commit footage, generated passes, weights, local settings, credentials,
 or proprietary Beeble files. `.gitignore` excludes runtime data.
 

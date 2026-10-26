@@ -24,7 +24,7 @@ try {
     Invoke-Python @('-m', 'pip', 'install', '-r', 'requirements.txt')
     & (Join-Path $PSScriptRoot 'packaging/install_prerequisites.ps1')
     Invoke-Python @('packaging/verify_runtime.py')
-    '0.4.1' | Set-Content -LiteralPath '.venv/studio-ready.txt'
+    '0.4.2' | Set-Content -LiteralPath '.venv/studio-ready.txt'
     Write-Host 'Ready. Model weights download when first used.'
     exit 0
 } catch {

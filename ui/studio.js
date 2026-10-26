@@ -204,7 +204,7 @@
     $('progress-track').setAttribute('aria-valuenow',String(percent));
     $('phase-label').textContent=event.phase==='Export'?'Finalizing':event.phase||'Preparing';
     $('progress-frames').textContent=event.total?`${event.current} / ${event.total} frames completed`:event.indeterminate?'Loading…':'Finalizing';
-    const stages={'Decode':0,'Alpha':1,'Depth':2,'Depth export':2,'Normals':2,'Materials':3,'SuperMat materials':3,'Draft materials':3,'Export':4,'Complete':5};
+    const stages={'Decode':0,'Motion':0,'Alpha':1,'Alpha stabilization':1,'Depth':2,'Depth stabilization':2,'Depth export':2,'Normals':2,'Normals stabilization':2,'Materials':3,'SuperMat materials':3,'Draft materials':3,'Export':4,'Complete':5};
     const index=stages[event.phase]??0;
     document.querySelectorAll('[data-progress-stage]').forEach(el=>{const n=Number(el.dataset.progressStage);el.classList.toggle('done',n<index);el.classList.toggle('active',n===index);});
   }
@@ -314,7 +314,7 @@
     $('close-settings').onclick=$('drawer-backdrop').onclick=$('save-settings').onclick=closeSettings;
     $('modal-close').onclick=$('modal-done').onclick=closeModal;
     $('modal-backdrop').onclick=e=>{if(e.target===$('modal-backdrop'))closeModal();};
-    $('reset-settings').onclick=()=>{Object.assign(settings,{processing:512,steps:4,temporal:.2,specular:.5,roughness:.65,metallic:0,basecolor:'Source colors',materials:'SuperMat estimates'});updateSettings();toast('Quality controls reset.');};
+    $('reset-settings').onclick=()=>{Object.assign(settings,{processing:512,steps:4,temporal:.6,specular:.5,roughness:.65,metallic:0,basecolor:'Source colors',materials:'SuperMat estimates'});updateSettings();toast('Quality controls reset.');};
     $('output-folder').onclick=async()=>{const result=await call('choose_folder','output');if(result?.path){settings.output=result.path;updateSettings();}};
     $('matte-button').onclick=async()=>{const result=await call('choose_matte');if(result?.path){settings.matte=result.path;settings.alpha='External matte';updateSettings();}};
     $('load-export').onclick=async()=>{const result=await call('choose_folder','export');if(result?.package){await loadClip(result.package);toast('Export loaded.');}};

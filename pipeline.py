@@ -24,6 +24,7 @@ import cv2
 import numpy as np
 from PIL import Image
 from media import PASSES, Cancelled, camera_metadata, extract, probe, save_depth, save_png, validate_package
+from temporal import MotionSequence
 
 
 @dataclass
@@ -40,7 +41,7 @@ class Settings:
     materials: str = 'SuperMat estimates'
     steps: int = 4
     processing_size: int = 512
-    temporal: float = .2
+    temporal: float = .6
     roughness: float = .65
     specular: float = .5
     metallic: float = 0.
@@ -115,8 +116,13 @@ class Generator:
         self.cancel = cancel or threading.Event()
         self.root = None
         self._progress = 0.
-        self._phases = ['Decode', 'Alpha', 'Depth', 'Depth export']
-        self._phases += ['Normals', 'Materials'] if settings.quality == 'AI materials + normals' else ['Materials']
+        self.motion = None
+        self._phases = ['Decode'] + (['Motion'] if settings.temporal else []) + ['Alpha']
+        if settings.temporal and settings.alpha in ('Anime subject', 'General subject'):
+            self._phases += ['Alpha stabilization']
+        self._phases += ['Depth'] + (['Depth stabilization'] if settings.temporal else []) + ['Depth export']
+        self._phases += (['Normals'] + (['Normals stabilization'] if settings.temporal else []) + ['Materials']
+                         if settings.quality == 'AI materials + normals' else ['Materials'])
         self._phases += ['Export']
 
     def event(self, message, phase='', current=0, total=0, preview=None):
@@ -180,6 +186,9 @@ class Generator:
                             self.cancel, lambda t: self.event(t, 'Decode'))
             with Image.open(files[0]) as first:
                 width, height = first.size
+            if s.temporal:
+                self.motion = MotionSequence(files, work / 'motion', s.temporal)
+                self.motion.build(self.check, lambda i, n: self.event('Analyzing frame motion …', 'Motion', i, n))
             self.make_alpha(files, info, work, fps)
             self.make_depth(files, work)
             if s.quality == 'AI materials + normals':
@@ -190,7 +199,7 @@ class Generator:
             self.event('Writing Blender metadata and validating every pass …', 'Export')
             metadata = camera_metadata(width, height, fps, len(files))
             (self.root / 'Camera.json').write_text(json.dumps(metadata), encoding='utf-8')
-            provenance = dict(application='VFX Pass Studio', version='0.1.0', settings=asdict(s),
+            provenance = dict(application='VFX Pass Studio', version='0.4.2', settings=asdict(s),
                 source_info=info, output_fps=str(fps), frames=len(files),
                 normal_convention='camera/screen space: X right, Y up, Z toward viewer, RGB = N * .5 + .5',
                 depth_convention='relative depth normalized over shot: 0 near, 1 far; synthetic 1.0–1.4 scale',
@@ -209,7 +218,9 @@ class Generator:
                                       and (s.basecolor == 'AI albedo' or s.materials == 'AI estimates')
                                       else 'source color + user constants'),
                         'alpha': s.alpha},
-                limitations=['Independent per-frame estimates with motion-compensated filtering; flicker may remain.',
+                temporal_processing=('Shared forward/backward motion; five-frame confidence-weighted stabilization, AI matte consensus, foreground depth alignment and shot-cut resets.'
+                                     if self.motion else 'Temporal stabilization disabled.'),
+                limitations=['Independent per-frame models with bidirectional post-filtering; fast motion, occlusions and flicker can still fail.',
                              'Specular is a user-set dielectric intensity, not a learned specular pass.',
                              'Not SwitchLight; materials and anime silhouettes can be inaccurate.'])
             (self.root / 'manifest.json').write_text(json.dumps(provenance, indent=2), encoding='utf-8')
@@ -253,7 +264,9 @@ class Generator:
                 raise ValueError('The matte video must cover every source frame.')
         if mode == 'Source alpha' and not info['has_alpha']:
             raise ValueError('This video does not contain an alpha channel. Choose an AI matte or Full frame.')
-        smooth = TemporalFilter(self.s.temporal)
+        raw_alpha = work / 'alpha_raw'
+        if session and self.motion:
+            raw_alpha.mkdir()
         for i, file, rgb in self.each('Alpha', files):
             if mode == 'Source alpha':
                 with Image.open(file) as image:
@@ -265,13 +278,25 @@ class Generator:
                 from rembg import remove
                 matte = remove(Image.fromarray(rgb), session=session, only_mask=True)
                 alpha = np.asarray(matte.convert('L'), np.float32) / 255
-                alpha = smooth(rgb, alpha)
+                if self.motion:
+                    save_png(raw_alpha / file.name, alpha)
             else:
                 alpha = np.ones(rgb.shape[:2], np.float32)
             save_png(self.root / 'alpha' / file.name, alpha)
             Image.fromarray(rgb).save(file)  # Store straight RGB; opacity is its own pass.
         del session
         release()
+        if self.motion and mode in ('Anime subject', 'General subject'):
+            def load(index):
+                with Image.open(raw_alpha / files[index].name) as image:
+                    return np.asarray(image.convert('L'), np.float32) / 255
+            for i, file, rgb in self.each('Alpha stabilization', files):
+                alpha = self.motion.stabilize(i, load, matte=True)
+                save_png(self.root / 'alpha' / file.name, np.clip(alpha, 0, 1))
+
+    def alpha_at(self, files, index):
+        with Image.open(self.root / 'alpha' / files[index].name) as image:
+            return np.asarray(image.convert('L'), np.float32) / 255
 
     def make_depth(self, files, work):
         self.event('Loading depth model (first use downloads weights) …', 'Depth')
@@ -279,22 +304,51 @@ class Generator:
         from depth_backend import load_processor, load_model
         processor = load_processor()
         model = load_model(self.device, self.check, lambda message: self.event(message, 'Depth'))
-        smooth = TemporalFilter(self.s.temporal)
-        lows, highs = [], []
+        raw = work / 'depth_raw'
+        raw.mkdir()
         for i, file, rgb in self.each('Depth', files):
             image = Image.fromarray(rgb)
             image.thumbnail((self.s.processing_size, self.s.processing_size))
             inputs = processor(images=image, return_tensors='pt').to(self.device)
             with torch.inference_mode():
                 inverse = model(**inputs).predicted_depth[0].float().cpu().numpy()
-            inverse = smooth(rgb, resize(inverse, rgb.shape))
-            np.save(work / f'{i:06d}.npy', inverse)
-            lows.append(float(np.percentile(inverse, 1)))
-            highs.append(float(np.percentile(inverse, 99)))
+            np.save(raw / f'{i:06d}.npy', resize(inverse, rgb.shape))
         del model, processor, inputs
         release()
-        low, high = min(lows), max(highs)
+        aligned = work / 'depth_aligned'
+        aligned.mkdir()
+        support = lambda index: self.alpha_at(files, index)
+        previous = None
+        for i, file in enumerate(files):
+            self.check()
+            if self.motion:
+                self.event(f'Aligning depth · frame {i+1} / {len(files)}', 'Depth stabilization', i, 2*len(files))
+            value = np.load(raw / f'{i:06d}.npy')
+            if self.motion and previous is not None:
+                value = self.motion.align_depth(i, value, previous, support)
+            np.save(aligned / f'{i:06d}.npy', value)
+            (raw / f'{i:06d}.npy').unlink()
+            previous = value
+        load = lambda index: np.load(aligned / f'{index:06d}.npy')
+        lows, highs = [], []
+        for i, file in enumerate(files):
+            self.check()
+            if self.motion:
+                self.event(f'Stabilizing depth · frame {i+1} / {len(files)}', 'Depth stabilization', len(files)+i, 2*len(files))
+            value = self.motion.stabilize(i, load, support) if self.motion else load(i)
+            np.save(work / f'{i:06d}.npy', value)
+            lows.append(float(np.percentile(value, 1)))
+            highs.append(float(np.percentile(value, 99)))
+        if self.motion:
+            self.event('Depth stabilization complete', 'Depth stabilization', 2*len(files), 2*len(files))
+        bounds = {}
+        cuts = sorted(self.motion.cuts if self.motion else {0}) + [len(files)]
+        for start, end in zip(cuts, cuts[1:]):
+            low, high = float(np.percentile(lows[start:end], 10)), float(np.percentile(highs[start:end], 90))
+            for index in range(start, end):
+                bounds[index] = low, high
         for i, file, rgb in self.each('Depth export', files):
+            low, high = bounds[i]
             inverse = np.load(work / f'{i:06d}.npy')
             depth = 1 - np.clip((inverse - low) / max(high - low, 1e-6), 0, 1)
             np.save(work / f'{i:06d}.npy', depth)
@@ -324,17 +378,23 @@ class Generator:
 
     def make_normals(self, files):
         pipe = self.load_marigold('normals')
-        smooth = TemporalFilter(self.s.temporal)
+        raw = self.root / '_work' / 'normal_raw'
+        raw.mkdir()
         for i, file, rgb in self.each('Normals', files):
             normal = self.predict(pipe, rgb)[0]
-            normal = smooth(rgb, normal)
+            normal /= np.maximum(np.linalg.norm(normal, axis=2, keepdims=True), 1e-6)
+            np.save(raw / f'{i:06d}.npy', normal)
+        del pipe
+        release()
+        load = lambda index: np.load(raw / f'{index:06d}.npy')
+        support = lambda index: self.alpha_at(files, index)
+        for i, file, rgb in self.each('Normals stabilization' if self.motion else 'Normals', files):
+            normal = self.motion.stabilize(i, load, support, normals=True) if self.motion else load(i)
             normal /= np.maximum(np.linalg.norm(normal, axis=2, keepdims=True), 1e-6)
             with Image.open(self.root / 'alpha' / file.name) as matte:
                 background = np.asarray(matte) < 2
             normal[background] = (0, 0, 1)
             save_png(self.root / 'normal' / file.name, normal * .5 + .5)
-        del pipe
-        release()
 
     def make_materials(self, files):
         if self.s.materials == 'SuperMat estimates':

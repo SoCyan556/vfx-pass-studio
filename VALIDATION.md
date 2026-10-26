@@ -1,5 +1,16 @@
 # Validation
 
+## 0.4.2 temporal stabilization
+
+- 20 unit/regression checks pass, including isolated AI mask dropouts, motion
+  translation, affine depth drift, shot-cut rejection, zero strength and single frames.
+- A real eight-frame clip completed anime foreground extraction, learned depth,
+  Marigold normals and stabilized export. Export validation and monotonic progress passed.
+- The desktop API integration test completed real draft inference and atomic ZIP
+  export while preserving preferences and source alpha input.
+- Synthetic dropout tests measure over 70% reduction in adjacent mask variation;
+  this is a controlled regression result, not a quality guarantee for arbitrary footage.
+
 ## 0.4.1 depth initialization fix
 
 - 15 tests pass, including the reported empty AutoImageProcessor lookup as a

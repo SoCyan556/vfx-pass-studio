@@ -22,7 +22,7 @@ if sys.stdout is None or sys.stderr is None:
 PASS_NAMES = ('normal', 'basecolor', 'roughness', 'specular', 'metallic', 'depth', 'alpha', 'source')
 DEFAULTS = dict(video='', output=str(ROOT / 'outputs'), alpha='Anime subject', matte='',
                 quality='AI materials + normals', size='1080', fps='', steps=4, processing=512,
-                temporal=.2, specular=.5, roughness=.65, metallic=0., basecolor='Source colors', materials='SuperMat estimates', last_export='')
+                temporal=.6, specular=.5, roughness=.65, metallic=0., basecolor='Source colors', materials='SuperMat estimates', last_export='')
 
 class DesktopAPI:
     def __init__(self):
@@ -81,7 +81,7 @@ class DesktopAPI:
             except Exception:
                 pass
         return dict(settings=dict(self._config), package=package, video=video, busy=self._busy,
-                    exporting=self._export_busy, model='SuperMat · Marigold · Depth Anything', version='0.4.1')
+                    exporting=self._export_busy, model='SuperMat · Marigold · Depth Anything', version='0.4.2')
 
     def poll(self):
         with self._lock:

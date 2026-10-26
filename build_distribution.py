@@ -9,7 +9,7 @@ PUBLISH_FILES = (
     'vfx_blender_bridge/__init__.py', 'test_contract.py', 'make_test_clip.py',
     'blender_smoke_test.py', 'build_distribution.py', 'test_ui.cjs',
     'test_desktop_integration.py', 'repair_basecolor.py', 'supermat_backend.py',
-    'test_packaging.py', 'depth_backend.py', 'test_depth_loading.py',
+    'test_packaging.py', 'depth_backend.py', 'test_depth_loading.py', 'temporal.py', 'test_temporal.py',
 )
 
 def source_files():

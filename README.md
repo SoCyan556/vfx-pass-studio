@@ -4,6 +4,15 @@ A local Windows video-to-pass generator for the user's existing Beeble Blender a
 
 ## Start
 
+**0.4.2:** improves AI mask, depth and normal consistency with shared forward/backward
+motion and a five-frame window. Depth is aligned on reliable overlapping foreground,
+and filtering resets at detected cuts. **Settings → Temporal stabilization → 60%**
+is the new default; upgrades preserve your existing setting, so adjust it explicitly.
+Regenerate passes to apply the change. Source alpha and external mattes are preserved.
+This is motion-aware post-processing, not a temporally trained model; fast motion,
+occlusions and incorrect segmentation can still fail. Lower the strength if motion
+detail becomes too soft, or use an external matte for reliable subject boundaries.
+
 **0.4.1:** fixes Depth Anything image-processor initialization on new PCs by
 bundling the verified processor and architecture configuration. Close the app
 before installing the update over 0.4.0. Settings, model caches and generated
